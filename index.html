@@ -4,215 +4,48 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>Электронный журнал оценок</title>
-  <!-- Firebase SDKs (CDN) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js">
-  </script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js">
-  </script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js">
-  </script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
   <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    }
-    body {
-      background: #f0f4f8;
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1.5rem;
-    }
-    .app-container {
-      width: 100%;
-      max-width: 1300px;
-      background: white;
-      border-radius: 2rem;
-      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      min-height: 90vh;
-    }
-    header {
-      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-      color: white;
-      padding: 1rem 2rem;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    header .logo {
-      font-weight: 700;
-      font-size: 1.4rem;
-      letter-spacing: -0.3px;
-    }
-    header .logo span {
-      color: #38bdf8;
-    }
-    nav {
-      display: flex;
-      gap: 0.5rem;
-      flex-wrap: wrap;
-    }
-    nav button {
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.15);
-      color: #e2e8f0;
-      padding: 0.5rem 1.2rem;
-      border-radius: 2rem;
-      cursor: pointer;
-      font-weight: 500;
-      transition: 0.2s;
-      font-size: 0.9rem;
-    }
-    nav button:hover, nav button.active {
-      background: #38bdf8;
-      color: #0f172a;
-      border-color: #38bdf8;
-      font-weight: 600;
-    }
-    .user-bar {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-    }
-    .user-bar .role-badge {
-      background: #38bdf8;
-      color: #0f172a;
-      padding: 0.3rem 1rem;
-      border-radius: 2rem;
-      font-size: 0.8rem;
-      font-weight: 700;
-      text-transform: uppercase;
-    }
-    .user-bar button {
-      background: #ef4444;
-      border: none;
-      color: white;
-      padding: 0.5rem 1rem;
-      border-radius: 2rem;
-      cursor: pointer;
-      font-weight: 600;
-      font-size: 0.8rem;
-    }
-    main {
-      flex: 1;
-      padding: 2rem;
-      overflow-y: auto;
-    }
-    .page {
-      display: none;
-    }
-    .page.active {
-      display: block;
-      animation: fade 0.3s ease;
-    }
+    * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
+    body { background: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
+    .app-container { width: 100%; max-width: 1300px; background: white; border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column; min-height: 90vh; }
+    header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
+    header .logo { font-weight: 700; font-size: 1.4rem; letter-spacing: -0.3px; }
+    header .logo span { color: #38bdf8; }
+    nav { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    nav button { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); color: #e2e8f0; padding: 0.5rem 1.2rem; border-radius: 2rem; cursor: pointer; font-weight: 500; transition: 0.2s; font-size: 0.9rem; }
+    nav button:hover, nav button.active { background: #38bdf8; color: #0f172a; border-color: #38bdf8; font-weight: 600; }
+    .user-bar { display: flex; align-items: center; gap: 1rem; }
+    .role-badge { background: #38bdf8; color: #0f172a; padding: 0.3rem 1rem; border-radius: 2rem; font-size: 0.8rem; font-weight: 700; text-transform: uppercase; }
+    .role-badge.pending { background: #f59e0b; }
+    .user-bar button { background: #ef4444; border: none; color: white; padding: 0.5rem 1rem; border-radius: 2rem; cursor: pointer; font-weight: 600; font-size: 0.8rem; }
+    main { flex: 1; padding: 2rem; overflow-y: auto; }
+    .page { display: none; }
+    .page.active { display: block; animation: fade 0.3s ease; }
     @keyframes fade { from {opacity: 0; transform: translateY(8px);} to {opacity: 1; transform: translateY(0);} }
-    h2 {
-      margin-bottom: 1.5rem;
-      color: #0f172a;
-      font-weight: 700;
-      font-size: 1.6rem;
-    }
-    .form-card {
-      background: #f8fafc;
-      padding: 2rem;
-      border-radius: 1.5rem;
-      max-width: 480px;
-      margin: 0 auto;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-    }
-    .form-card input, .form-card select {
-      width: 100%;
-      padding: 0.8rem 1rem;
-      margin-bottom: 1rem;
-      border: 1px solid #d1d5db;
-      border-radius: 0.8rem;
-      font-size: 1rem;
-    }
-    .btn-primary {
-      background: #0f172a;
-      color: white;
-      padding: 0.8rem 1.5rem;
-      border: none;
-      border-radius: 2rem;
-      font-weight: 700;
-      cursor: pointer;
-      width: 100%;
-      font-size: 1rem;
-      transition: 0.2s;
-    }
-    .btn-primary:hover {
-      background: #38bdf8;
-      color: #0f172a;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 1rem;
-      overflow: hidden;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-    }
-    th {
-      background: #1e293b;
-      color: white;
-      padding: 0.8rem;
-      text-align: left;
-    }
-    td, th {
-      padding: 0.7rem 1rem;
-      border-bottom: 1px solid #e5e7eb;
-    }
-    .grade-input {
-      width: 70px;
-      padding: 0.4rem;
-      border-radius: 0.5rem;
-      border: 1px solid #cbd5e1;
-    }
-    .schedule-table td {
-      font-size: 0.9rem;
-    }
-    .paid-card {
-      background: linear-gradient(145deg, #fef3c7, #fde68a);
-      padding: 1.5rem;
-      border-radius: 1.2rem;
-      margin-bottom: 1rem;
-      border-left: 5px solid #f59e0b;
-    }
-    .admin-controls {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-    .card {
-      background: #f8fafc;
-      padding: 1.5rem;
-      border-radius: 1.2rem;
-    }
-    @media (max-width: 600px) {
-      header { padding: 1rem; }
-      nav { gap: 0.3rem; }
-      nav button { padding: 0.4rem 0.8rem; font-size: 0.8rem; }
-    }
-    .message {
-      padding: 0.7rem;
-      border-radius: 0.8rem;
-      margin-bottom: 1rem;
-      font-weight: 500;
-    }
+    h2 { margin-bottom: 1.5rem; color: #0f172a; font-weight: 700; font-size: 1.6rem; }
+    .form-card { background: #f8fafc; padding: 2rem; border-radius: 1.5rem; max-width: 480px; margin: 0 auto; box-shadow: 0 4px 15px rgba(0,0,0,0.05); }
+    .form-card input, .form-card select { width: 100%; padding: 0.8rem 1rem; margin-bottom: 1rem; border: 1px solid #d1d5db; border-radius: 0.8rem; font-size: 1rem; }
+    .btn-primary { background: #0f172a; color: white; padding: 0.8rem 1.5rem; border: none; border-radius: 2rem; font-weight: 700; cursor: pointer; width: 100%; font-size: 1rem; transition: 0.2s; }
+    .btn-primary:hover { background: #38bdf8; color: #0f172a; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 1rem; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.05); margin-bottom: 1rem; }
+    th { background: #1e293b; color: white; padding: 0.8rem; text-align: left; }
+    td, th { padding: 0.7rem 1rem; border-bottom: 1px solid #e5e7eb; }
+    .grade-input { width: 80px; padding: 0.4rem; border-radius: 0.5rem; border: 1px solid #cbd5e1; }
+    .schedule-table td { font-size: 0.9rem; }
+    .paid-card { background: linear-gradient(145deg, #fef3c7, #fde68a); padding: 1.5rem; border-radius: 1.2rem; margin-bottom: 1rem; border-left: 5px solid #f59e0b; }
+    .admin-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .card { background: #f8fafc; padding: 1.5rem; border-radius: 1.2rem; }
+    .message { padding: 0.7rem; border-radius: 0.8rem; margin-bottom: 1rem; font-weight: 500; }
     .error { background: #fee2e2; color: #991b1b; }
     .success { background: #dcfce7; color: #166534; }
+    .pending-message { background: #fff7ed; color: #9a3412; padding: 2rem; border-radius: 1.5rem; text-align: center; }
   </style>
 </head>
 <body>
-<div class="app-container" id="appContainer">
+<div class="app-container">
   <header>
     <div class="logo">📘 <span>Журнал</span> Оценок</div>
     <nav id="mainNav">
@@ -228,40 +61,37 @@
   </header>
   <main>
     <!-- Публичное расписание -->
-    <div class="page" id="page-schedule">
+    <div class="page active" id="page-schedule">
       <h2>📅 Актуальное расписание</h2>
       <div id="scheduleContent">Загрузка...</div>
     </div>
     <!-- Вход -->
     <div class="page" id="page-login">
       <div class="form-card">
-        <h2>Вход в систему</h2>
+        <h2>Вход</h2>
         <div id="loginMessage"></div>
-        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
         <input type="password" id="loginPassword" placeholder="Пароль">
         <button class="btn-primary" id="loginSubmit">Войти</button>
       </div>
     </div>
-    <!-- Регистрация -->
+    <!-- Регистрация (без выбора роли) -->
     <div class="page" id="page-register">
       <div class="form-card">
         <h2>Регистрация</h2>
         <div id="registerMessage"></div>
         <input type="email" id="regEmail" placeholder="Email">
         <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)">
-        <select id="regRole">
-          <option value="student">Курсант</option>
-          <option value="teacher">Преподаватель</option>
-        </select>
+        <p style="font-size:0.9rem; color:#475569; margin-bottom:1rem;">⏳ Роль назначит администратор</p>
         <button class="btn-primary" id="registerSubmit">Зарегистрироваться</button>
       </div>
     </div>
-    <!-- Дашборд преподавателя -->
+    <!-- Дашборд преподавателя (только журнал оценок) -->
     <div class="page" id="page-teacher">
       <h2>👨‍🏫 Журнал оценок (преподаватель)</h2>
       <div id="teacherGrades"></div>
     </div>
-    <!-- Дашборд курсанта -->
+    <!-- Дашборд курсанта (только свои оценки) -->
     <div class="page" id="page-student">
       <h2>📖 Мои оценки</h2>
       <div id="studentGrades"></div>
@@ -273,15 +103,15 @@
     </div>
     <!-- Админ-панель -->
     <div class="page" id="page-admin">
-      <h2>⚙️ Админ-панель</h2>
+      <h2>⚙️ Панель администратора</h2>
       <div class="admin-controls">
         <div class="card">
-          <h3>👥 Пользователи</h3>
+          <h3>👥 Управление пользователями</h3>
           <div id="adminUsers"></div>
         </div>
         <div class="card">
           <h3>📅 Управление расписанием</h3>
-          <input type="text" id="schedDay" placeholder="День (например Пн)">
+          <input type="text" id="schedDay" placeholder="День (Пн)">
           <input type="text" id="schedTime" placeholder="Время (09:00)">
           <input type="text" id="schedSubject" placeholder="Предмет">
           <input type="text" id="schedTeacher" placeholder="Преподаватель">
@@ -298,11 +128,19 @@
         </div>
       </div>
     </div>
+    <!-- Ожидание подтверждения -->
+    <div class="page" id="page-pending">
+      <div class="pending-message">
+        <h2>⏳ Ожидание подтверждения</h2>
+        <p>Ваша учётная запись создана, но ещё не активирована администратором.</p>
+        <p>Пожалуйста, дождитесь назначения роли. Вы получите доступ сразу после этого.</p>
+      </div>
+    </div>
   </main>
 </div>
 <script>
   (function() {
-    // ⚠️ ЗАМЕНИТЕ НА ВАШИ ДАННЫЕ ИЗ FIREBASE CONSOLE
+    // ⚠️ ЗАМЕНИТЕ ЭТОТ ОБЪЕКТ НА ВАШИ ДАННЫЕ ИЗ FIREBASE
     const firebaseConfig = {
       apiKey: "AIzaSyD-PLACEHOLDER-KEY",
       authDomain: "your-project.firebaseapp.com",
@@ -316,7 +154,6 @@
     const auth = firebase.auth();
     const db = firebase.firestore();
 
-    // --- Навигация и состояние ---
     const pages = {
       schedule: document.getElementById('page-schedule'),
       login: document.getElementById('page-login'),
@@ -324,7 +161,8 @@
       teacher: document.getElementById('page-teacher'),
       student: document.getElementById('page-student'),
       paid: document.getElementById('page-paid'),
-      admin: document.getElementById('page-admin')
+      admin: document.getElementById('page-admin'),
+      pending: document.getElementById('page-pending')
     };
     let currentUser = null;
     let userRole = null;
@@ -338,33 +176,38 @@
       if (navBtn) navBtn.classList.add('active');
     }
 
-    // Навигация по кнопкам
     document.getElementById('mainNav').addEventListener('click', (e) => {
       if (e.target.tagName === 'BUTTON' && e.target.dataset.page) {
         showPage(e.target.dataset.page);
       }
     });
 
-    // Обновление UI после авторизации
     function updateUIForUser(user) {
       const userBar = document.getElementById('userBar');
       const mainNav = document.getElementById('mainNav');
       if (user) {
         userBar.style.display = 'flex';
         document.getElementById('userEmail').textContent = user.email;
-        mainNav.innerHTML = '';
+        const badge = document.getElementById('roleBadge');
+        badge.classList.remove('pending');
+
         if (userRole === 'teacher') {
+          badge.textContent = 'Преподаватель';
           mainNav.innerHTML = '<button data-page="teacher">📝 Журнал</button><button data-page="schedule">📅 Расписание</button><button data-page="paid">💎 Платное</button>';
-          document.getElementById('roleBadge').textContent = 'Преподаватель';
           showPage('teacher');
         } else if (userRole === 'student') {
+          badge.textContent = 'Курсант';
           mainNav.innerHTML = '<button data-page="student">📖 Оценки</button><button data-page="schedule">📅 Расписание</button><button data-page="paid">💎 Платное</button>';
-          document.getElementById('roleBadge').textContent = 'Курсант';
           showPage('student');
         } else if (userRole === 'admin') {
+          badge.textContent = 'Администратор';
           mainNav.innerHTML = '<button data-page="admin">⚙️ Админ</button><button data-page="schedule">📅 Расписание</button><button data-page="paid">💎 Платное</button>';
-          document.getElementById('roleBadge').textContent = 'Админ';
           showPage('admin');
+        } else if (userRole === 'pending') {
+          badge.textContent = 'Ожидание';
+          badge.classList.add('pending');
+          mainNav.innerHTML = '<button data-page="schedule">📅 Расписание</button>';
+          showPage('pending');
         }
       } else {
         userBar.style.display = 'none';
@@ -377,10 +220,7 @@
       }
     }
 
-    // Выход
-    document.getElementById('logoutBtn').addEventListener('click', () => {
-      auth.signOut();
-    });
+    document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
 
     auth.onAuthStateChanged(async (user) => {
       if (user) {
@@ -388,9 +228,9 @@
         userEmail = user.email;
         const doc = await db.collection('users').doc(user.uid).get();
         if (doc.exists) {
-          userRole = doc.data().role;
+          userRole = doc.data().role || 'pending';
         } else {
-          userRole = 'student';
+          userRole = 'pending';
         }
         updateUIForUser(user);
         if (userRole === 'teacher') loadTeacherGrades();
@@ -407,13 +247,12 @@
       }
     });
 
-    // --- Регистрация ---
+    // Регистрация (роль всегда pending)
     document.getElementById('registerSubmit').addEventListener('click', async () => {
       const msg = document.getElementById('registerMessage');
       msg.innerHTML = '';
       const email = document.getElementById('regEmail').value.trim();
       const password = document.getElementById('regPassword').value;
-      const role = document.getElementById('regRole').value;
       if (!email || password.length < 6) {
         msg.innerHTML = '<div class="message error">Введите корректный email и пароль (мин 6 символов)</div>';
         return;
@@ -422,17 +261,17 @@
         const cred = await auth.createUserWithEmailAndPassword(email, password);
         await db.collection('users').doc(cred.user.uid).set({
           email: email,
-          role: role,
+          role: 'pending',
           createdAt: firebase.firestore.FieldValue.serverTimestamp()
         });
-        msg.innerHTML = '<div class="message success">Регистрация успешна!</div>';
-        setTimeout(() => showPage('login'), 1000);
+        msg.innerHTML = '<div class="message success">Регистрация успешна! Ожидайте подтверждения администратора.</div>';
+        setTimeout(() => showPage('login'), 1500);
       } catch (e) {
         msg.innerHTML = `<div class="message error">Ошибка: ${e.message}</div>`;
       }
     });
 
-    // --- Вход ---
+    // Вход
     document.getElementById('loginSubmit').addEventListener('click', async () => {
       const msg = document.getElementById('loginMessage');
       msg.innerHTML = '';
@@ -445,7 +284,7 @@
       }
     });
 
-    // --- Загрузка расписания (публичное) ---
+    // Загрузка расписания
     async function loadSchedulePublic() {
       const container = document.getElementById('scheduleContent');
       try {
@@ -462,18 +301,18 @@
         html += '</table>';
         container.innerHTML = html;
       } catch (e) {
-        container.innerHTML = '<p>Ошибка загрузки расписания.</p>';
+        container.innerHTML = '<p>Ошибка загрузки.</p>';
       }
     }
 
-    // --- Преподаватель: журнал оценок ---
+    // Преподаватель: журнал оценок
     async function loadTeacherGrades() {
       const container = document.getElementById('teacherGrades');
       const studentsSnap = await db.collection('users').where('role','==','student').get();
       const gradesSnap = await db.collection('grades').get();
       const gradesMap = {};
       gradesSnap.forEach(d => { gradesMap[d.id] = d.data(); });
-      let html = '<table><tr><th>Курсант (email)</th><th>Предмет</th><th>Оценка</th><th>Действие</th></tr>';
+      let html = '<table><tr><th>Курсант</th><th>Предмет</th><th>Оценка</th><th></th></tr>';
       studentsSnap.forEach(studentDoc => {
         const s = studentDoc.data();
         const gradeId = studentDoc.id;
@@ -482,7 +321,7 @@
           <td>${s.email}</td>
           <td><input class="grade-input" id="subj_${gradeId}" value="${gradeData.subject||''}" placeholder="Предмет"></td>
           <td><input class="grade-input" id="grade_${gradeId}" value="${gradeData.grade||''}" placeholder="Оценка"></td>
-          <td><button class="btn-primary" style="width:auto; padding:0.4rem 1rem;" onclick="window.saveGrade('${gradeId}')">Сохранить</button></td>
+          <td><button class="btn-primary" style="width:auto; padding:0.4rem 1rem;" onclick="window.saveGrade('${gradeId}')">✔️</button></td>
         </tr>`;
       });
       html += '</table>';
@@ -498,7 +337,7 @@
       alert('Оценка сохранена!');
     };
 
-    // --- Курсант: мои оценки ---
+    // Курсант: мои оценки
     async function loadStudentGrades() {
       const container = document.getElementById('studentGrades');
       if (!currentUser) return;
@@ -511,11 +350,11 @@
       }
     }
 
-    // --- Платное отделение (доступно авторизованным) ---
+    // Платное отделение (для авторизованных)
     async function loadPaidContent() {
       const container = document.getElementById('paidContent');
       if (!currentUser) {
-        container.innerHTML = '<p>🔒 Войдите, чтобы увидеть информацию платного отделения.</p>';
+        container.innerHTML = '<p>🔒 Войдите, чтобы увидеть информацию.</p>';
         return;
       }
       try {
@@ -529,8 +368,7 @@
           const d = doc.data();
           html += `<div class="paid-card">
             <strong>🧑‍🏫 Проводит:</strong> ${d.trainer||'—'}<br>
-            <strong>🕒 Время:</strong> ${d.time||'—'}<br>
-            <strong>📅 Дата:</strong> ${d.date||'—'}
+            <strong>🕒 Время:</strong> ${d.time||'—'}
           </div>`;
         });
         container.innerHTML = html;
@@ -539,18 +377,31 @@
       }
     }
 
-    // --- Админка ---
+    // Админка
     async function loadAdminData() {
-      // пользователи
+      // Пользователи с возможностью смены роли
       const usersSnap = await db.collection('users').get();
-      let userHtml = '<ul>';
+      let userHtml = '<table><tr><th>Email</th><th>Роль</th><th>Изменить</th></tr>';
       usersSnap.forEach(doc => {
         const u = doc.data();
-        userHtml += `<li>${u.email} — <b>${u.role}</b></li>`;
+        const uid = doc.id;
+        userHtml += `<tr>
+          <td>${u.email}</td>
+          <td>${u.role}</td>
+          <td>
+            <select id="roleSelect_${uid}">
+              <option value="student" ${u.role==='student'?'selected':''}>Курсант</option>
+              <option value="teacher" ${u.role==='teacher'?'selected':''}>Преподаватель</option>
+              <option value="admin" ${u.role==='admin'?'selected':''}>Администратор</option>
+            </select>
+            <button onclick="window.updateUserRole('${uid}')" style="margin-left:0.3rem;">Сохранить</button>
+          </td>
+        </tr>`;
       });
-      userHtml += '</ul>';
+      userHtml += '</table>';
       document.getElementById('adminUsers').innerHTML = userHtml;
-      // расписание в админке
+
+      // Расписание
       const schedSnap = await db.collection('schedule').get();
       let schedHtml = '';
       schedSnap.forEach(doc => {
@@ -558,7 +409,8 @@
         schedHtml += `<div>${s.day} ${s.time} — ${s.subject} (${s.teacher}) <button onclick="window.deleteItem('schedule','${doc.id}')">❌</button></div>`;
       });
       document.getElementById('adminScheduleList').innerHTML = schedHtml || '—';
-      // платное
+
+      // Платное
       const paidSnap = await db.collection('paid_sessions').get();
       let paidHtml = '';
       paidSnap.forEach(doc => {
@@ -567,10 +419,19 @@
       });
       document.getElementById('adminPaidList').innerHTML = paidHtml || '—';
     }
+
+    window.updateUserRole = async function(uid) {
+      const select = document.getElementById('roleSelect_' + uid);
+      const newRole = select.value;
+      await db.collection('users').doc(uid).update({ role: newRole });
+      alert('Роль обновлена!');
+      loadAdminData();
+    };
     window.deleteItem = async (collection, docId) => {
       await db.collection(collection).doc(docId).delete();
       loadAdminData();
     };
+
     document.getElementById('addScheduleBtn').addEventListener('click', async () => {
       const day = document.getElementById('schedDay').value.trim();
       const time = document.getElementById('schedTime').value.trim();
@@ -578,10 +439,7 @@
       const teacher = document.getElementById('schedTeacher').value.trim();
       if (!day || !time || !subject) return alert('Заполните поля');
       await db.collection('schedule').add({ day, time, subject, teacher });
-      document.getElementById('schedDay').value='';
-      document.getElementById('schedTime').value='';
-      document.getElementById('schedSubject').value='';
-      document.getElementById('schedTeacher').value='';
+      ['schedDay','schedTime','schedSubject','schedTeacher'].forEach(id => document.getElementById(id).value='');
       loadAdminData();
       loadSchedulePublic();
     });
@@ -591,9 +449,7 @@
       const time = document.getElementById('paidTime').value.trim();
       if (!studentEmail || !trainer || !time) return alert('Заполните все поля');
       await db.collection('paid_sessions').add({ studentEmail, trainer, time });
-      document.getElementById('paidStudent').value='';
-      document.getElementById('paidTrainer').value='';
-      document.getElementById('paidTime').value='';
+      ['paidStudent','paidTrainer','paidTime'].forEach(id => document.getElementById(id).value='');
       loadAdminData();
     });
 
