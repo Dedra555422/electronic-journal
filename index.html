@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>Электронный журнал оценок</title>
+  <!-- Firebase SDK -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
@@ -140,7 +141,7 @@
 </div>
 <script>
   (function() {
-    // ⚠️ ЗАМЕНИТЕ ЭТОТ ОБЪЕКТ НА ВАШИ ДАННЫЕ ИЗ FIREBASE
+    // ⚠️ ЗАМЕНИТЕ ЭТОТ ОБЪЕКТ НА ВАШИ ДАННЫЕ ИЗ FIREBASE !!!
     const firebaseConfig = {
       apiKey: "AIzaSyD-PLACEHOLDER-KEY",
       authDomain: "your-project.firebaseapp.com",
@@ -149,6 +150,7 @@
       messagingSenderId: "000000000000",
       appId: "1:000000000000:web:xxxxxxxxxxxxxxxx"
     };
+    // -------------------------------------------------
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
