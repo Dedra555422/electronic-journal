@@ -4,10 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>Электронный журнал оценок</title>
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
@@ -56,53 +53,46 @@
     </nav>
     <div class="user-bar" id="userBar" style="display:none;">
       <span class="role-badge" id="roleBadge"></span>
-      <span id="userEmail" style="font-size:0.85rem;"></span>
+      <span id="userDisplayName" style="font-size:0.85rem;"></span>
       <button id="logoutBtn">Выйти</button>
     </div>
   </header>
   <main>
-    <!-- Публичное расписание -->
     <div class="page active" id="page-schedule">
       <h2>📅 Актуальное расписание</h2>
       <div id="scheduleContent">Загрузка...</div>
     </div>
-    <!-- Вход -->
     <div class="page" id="page-login">
       <div class="form-card">
         <h2>Вход</h2>
         <div id="loginMessage"></div>
-        <input type="email" id="loginEmail" placeholder="Email" autocomplete="email">
+        <input type="text" id="loginUsername" placeholder="Ваш ник" autocomplete="username">
         <input type="password" id="loginPassword" placeholder="Пароль">
         <button class="btn-primary" id="loginSubmit">Войти</button>
       </div>
     </div>
-    <!-- Регистрация (без выбора роли) -->
     <div class="page" id="page-register">
       <div class="form-card">
         <h2>Регистрация</h2>
         <div id="registerMessage"></div>
-        <input type="email" id="regEmail" placeholder="Email">
+        <input type="text" id="regUsername" placeholder="Придумайте ник">
         <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)">
         <p style="font-size:0.9rem; color:#475569; margin-bottom:1rem;">⏳ Роль назначит администратор</p>
         <button class="btn-primary" id="registerSubmit">Зарегистрироваться</button>
       </div>
     </div>
-    <!-- Дашборд преподавателя (только журнал оценок) -->
     <div class="page" id="page-teacher">
       <h2>👨‍🏫 Журнал оценок (преподаватель)</h2>
       <div id="teacherGrades"></div>
     </div>
-    <!-- Дашборд курсанта (только свои оценки) -->
     <div class="page" id="page-student">
       <h2>📖 Мои оценки</h2>
       <div id="studentGrades"></div>
     </div>
-    <!-- Платное отделение -->
     <div class="page" id="page-paid">
       <h2>💎 Платное отделение — информация о занятиях</h2>
       <div id="paidContent"></div>
     </div>
-    <!-- Админ-панель -->
     <div class="page" id="page-admin">
       <h2>⚙️ Панель администратора</h2>
       <div class="admin-controls">
@@ -121,7 +111,7 @@
         </div>
         <div class="card">
           <h3>💎 Платное отделение</h3>
-          <input type="text" id="paidStudent" placeholder="Email курсанта">
+          <input type="text" id="paidStudent" placeholder="Ник курсанта">
           <input type="text" id="paidTrainer" placeholder="Кто проводит">
           <input type="text" id="paidTime" placeholder="Время и дата">
           <button class="btn-primary" id="addPaidBtn" style="margin-top:0.5rem;">Добавить запись</button>
@@ -129,7 +119,6 @@
         </div>
       </div>
     </div>
-    <!-- Ожидание подтверждения -->
     <div class="page" id="page-pending">
       <div class="pending-message">
         <h2>⏳ Ожидание подтверждения</h2>
@@ -141,20 +130,9 @@
 </div>
 <script>
   (function() {
-    // ⚠️ ЗАМЕНИТЕ ЭТОТ ОБЪЕКТ НА ВАШИ ДАННЫЕ ИЗ FIREBASE !!!
-    const firebaseConfig = {
-      apiKey: "AIzaSyD-PLACEHOLDER-KEY",
-      authDomain: "your-project.firebaseapp.com",
-      projectId: "your-project-id",
-      storageBucket: "your-project.appspot.com",
-      messagingSenderId: "000000000000",
-      appId: "1:000000000000:web:xxxxxxxxxxxxxxxx"
-    };
-    // -------------------------------------------------
-
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.firestore();
+    const SUPABASE_URL = 'https://ucbnqqlpflwaainfpxxv.supabase.co';
+    const SUPABASE_ANON_KEY = 'sb_publishable_mU-PHJl92-VjcMz3ZiPOvg_RSz3JETp';
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     const pages = {
       schedule: document.getElementById('page-schedule'),
@@ -168,7 +146,7 @@
     };
     let currentUser = null;
     let userRole = null;
-    let userEmail = '';
+    let currentUsername = '';
 
     function showPage(pageId) {
       Object.values(pages).forEach(p => p.classList.remove('active'));
@@ -179,9 +157,7 @@
     }
 
     document.getElementById('mainNav').addEventListener('click', (e) => {
-      if (e.target.tagName === 'BUTTON' && e.target.dataset.page) {
-        showPage(e.target.dataset.page);
-      }
+      if (e.target.tagName === 'BUTTON' && e.target.dataset.page) showPage(e.target.dataset.page);
     });
 
     function updateUIForUser(user) {
@@ -189,10 +165,9 @@
       const mainNav = document.getElementById('mainNav');
       if (user) {
         userBar.style.display = 'flex';
-        document.getElementById('userEmail').textContent = user.email;
+        document.getElementById('userDisplayName').textContent = currentUsername || 'Пользователь';
         const badge = document.getElementById('roleBadge');
         badge.classList.remove('pending');
-
         if (userRole === 'teacher') {
           badge.textContent = 'Преподаватель';
           mainNav.innerHTML = '<button data-page="teacher">📝 Журнал</button><button data-page="schedule">📅 Расписание</button><button data-page="paid">💎 Платное</button>';
@@ -213,224 +188,182 @@
         }
       } else {
         userBar.style.display = 'none';
-        mainNav.innerHTML = `
-          <button data-page="schedule">📅 Расписание</button>
-          <button data-page="login">🔐 Вход</button>
-          <button data-page="register">📝 Регистрация</button>
-        `;
+        mainNav.innerHTML = '<button data-page="schedule">📅 Расписание</button><button data-page="login">🔐 Вход</button><button data-page="register">📝 Регистрация</button>';
         showPage('schedule');
       }
     }
 
-    document.getElementById('logoutBtn').addEventListener('click', () => auth.signOut());
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await supabase.auth.signOut();
+    });
 
-    auth.onAuthStateChanged(async (user) => {
-      if (user) {
-        currentUser = user;
-        userEmail = user.email;
-        const doc = await db.collection('users').doc(user.uid).get();
-        if (doc.exists) {
-          userRole = doc.data().role || 'pending';
-        } else {
+    supabase.auth.onAuthStateChange(async (event, session) => {
+      if (session?.user) {
+        currentUser = session.user;
+        // Получаем данные пользователя из таблицы users
+        const { data: userData, error } = await supabase
+          .from('users')
+          .select('username, role')
+          .eq('id', currentUser.id)
+          .single();
+        if (error || !userData) {
           userRole = 'pending';
+          currentUsername = 'Ожидание';
+        } else {
+          userRole = userData.role;
+          currentUsername = userData.username;
         }
-        updateUIForUser(user);
+        updateUIForUser(currentUser);
         if (userRole === 'teacher') loadTeacherGrades();
         if (userRole === 'student') loadStudentGrades();
         if (userRole === 'admin') loadAdminData();
         loadSchedulePublic();
         loadPaidContent();
       } else {
-        currentUser = null;
-        userRole = null;
-        userEmail = '';
+        currentUser = null; userRole = null; currentUsername = '';
         updateUIForUser(null);
         loadSchedulePublic();
       }
     });
 
-    // Регистрация (роль всегда pending)
+    // Регистрация по нику
     document.getElementById('registerSubmit').addEventListener('click', async () => {
       const msg = document.getElementById('registerMessage');
       msg.innerHTML = '';
-      const email = document.getElementById('regEmail').value.trim();
+      const username = document.getElementById('regUsername').value.trim();
       const password = document.getElementById('regPassword').value;
-      if (!email || password.length < 6) {
-        msg.innerHTML = '<div class="message error">Введите корректный email и пароль (мин 6 символов)</div>';
+      if (!username || password.length < 6) {
+        msg.innerHTML = '<div class="message error">Введите ник и пароль (мин 6 символов)</div>';
         return;
       }
-      try {
-        const cred = await auth.createUserWithEmailAndPassword(email, password);
-        await db.collection('users').doc(cred.user.uid).set({
-          email: email,
-          role: 'pending',
-          createdAt: firebase.firestore.FieldValue.serverTimestamp()
-        });
-        msg.innerHTML = '<div class="message success">Регистрация успешна! Ожидайте подтверждения администратора.</div>';
-        setTimeout(() => showPage('login'), 1500);
-      } catch (e) {
-        msg.innerHTML = `<div class="message error">Ошибка: ${e.message}</div>`;
+      // Проверяем, нет ли уже такого ника
+      const { data: existing } = await supabase.from('users').select('username').eq('username', username).single();
+      if (existing) {
+        msg.innerHTML = '<div class="message error">Этот ник уже занят. Выберите другой.</div>';
+        return;
       }
+      // Генерируем фиктивный email
+      const fakeEmail = `${username}@journal.local`;
+      const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
+      if (error) {
+        msg.innerHTML = `<div class="message error">${error.message}</div>`;
+        return;
+      }
+      if (data.user) {
+        const { error: insertError } = await supabase.from('users').insert([
+          { id: data.user.id, username, email: fakeEmail, role: 'pending' }
+        ]);
+        if (insertError) {
+          msg.innerHTML = '<div class="message error">Ошибка сохранения пользователя.</div>';
+          return;
+        }
+      }
+      msg.innerHTML = '<div class="message success">Регистрация успешна! Ожидайте подтверждения администратора.</div>';
+      setTimeout(() => showPage('login'), 1500);
     });
 
-    // Вход
+    // Вход по нику
     document.getElementById('loginSubmit').addEventListener('click', async () => {
       const msg = document.getElementById('loginMessage');
       msg.innerHTML = '';
-      const email = document.getElementById('loginEmail').value.trim();
+      const username = document.getElementById('loginUsername').value.trim();
       const password = document.getElementById('loginPassword').value;
-      try {
-        await auth.signInWithEmailAndPassword(email, password);
-      } catch (e) {
-        msg.innerHTML = `<div class="message error">Ошибка: ${e.message}</div>`;
+      if (!username || !password) {
+        msg.innerHTML = '<div class="message error">Введите ник и пароль</div>';
+        return;
       }
+      // Ищем email по нику
+      const { data: userRow, error: findError } = await supabase
+        .from('users')
+        .select('email')
+        .eq('username', username)
+        .single();
+      if (findError || !userRow) {
+        msg.innerHTML = '<div class="message error">Пользователь с таким ником не найден.</div>';
+        return;
+      }
+      const { error } = await supabase.auth.signInWithPassword({
+        email: userRow.email,
+        password: password
+      });
+      if (error) msg.innerHTML = `<div class="message error">${error.message}</div>`;
     });
 
-    // Загрузка расписания
     async function loadSchedulePublic() {
       const container = document.getElementById('scheduleContent');
-      try {
-        const snap = await db.collection('schedule').orderBy('day').get();
-        if (snap.empty) {
-          container.innerHTML = '<p>Расписание пока пусто.</p>';
-          return;
-        }
-        let html = '<table class="schedule-table"><tr><th>День</th><th>Время</th><th>Предмет</th><th>Преподаватель</th></tr>';
-        snap.forEach(doc => {
-          const d = doc.data();
-          html += `<tr><td>${d.day||''}</td><td>${d.time||''}</td><td>${d.subject||''}</td><td>${d.teacher||''}</td></tr>`;
-        });
-        html += '</table>';
-        container.innerHTML = html;
-      } catch (e) {
-        container.innerHTML = '<p>Ошибка загрузки.</p>';
-      }
+      const { data, error } = await supabase.from('schedule').select('*').order('day');
+      if (error || !data?.length) { container.innerHTML = '<p>Расписание пока пусто.</p>'; return; }
+      let html = '<table class="schedule-table"><tr><th>День</th><th>Время</th><th>Предмет</th><th>Преподаватель</th></tr>';
+      data.forEach(d => html += `<tr><td>${d.day||''}</td><td>${d.time||''}</td><td>${d.subject||''}</td><td>${d.teacher||''}</td></tr>`);
+      html += '</table>';
+      container.innerHTML = html;
     }
 
-    // Преподаватель: журнал оценок
     async function loadTeacherGrades() {
       const container = document.getElementById('teacherGrades');
-      const studentsSnap = await db.collection('users').where('role','==','student').get();
-      const gradesSnap = await db.collection('grades').get();
-      const gradesMap = {};
-      gradesSnap.forEach(d => { gradesMap[d.id] = d.data(); });
+      const { data: students } = await supabase.from('users').select('id, username').eq('role', 'student');
+      const { data: grades } = await supabase.from('grades').select('*');
+      const gradesMap = {}; if (grades) grades.forEach(g => gradesMap[g.student_id] = g);
       let html = '<table><tr><th>Курсант</th><th>Предмет</th><th>Оценка</th><th></th></tr>';
-      studentsSnap.forEach(studentDoc => {
-        const s = studentDoc.data();
-        const gradeId = studentDoc.id;
-        const gradeData = gradesMap[gradeId] || { subject: '', grade: '' };
-        html += `<tr>
-          <td>${s.email}</td>
-          <td><input class="grade-input" id="subj_${gradeId}" value="${gradeData.subject||''}" placeholder="Предмет"></td>
-          <td><input class="grade-input" id="grade_${gradeId}" value="${gradeData.grade||''}" placeholder="Оценка"></td>
-          <td><button class="btn-primary" style="width:auto; padding:0.4rem 1rem;" onclick="window.saveGrade('${gradeId}')">✔️</button></td>
-        </tr>`;
+      if (students) students.forEach(s => {
+        const g = gradesMap[s.id] || { subject: '', grade: '' };
+        html += `<tr><td>${s.username}</td><td><input class="grade-input" id="subj_${s.id}" value="${g.subject||''}"></td><td><input class="grade-input" id="grade_${s.id}" value="${g.grade||''}"></td><td><button class="btn-primary" style="width:auto; padding:0.4rem 1rem;" onclick="window.saveGrade('${s.id}')">✔️</button></td></tr>`;
       });
       html += '</table>';
       container.innerHTML = html;
     }
-    window.saveGrade = async function(studentUid) {
-      const subject = document.getElementById('subj_'+studentUid).value;
-      const grade = document.getElementById('grade_'+studentUid).value;
-      await db.collection('grades').doc(studentUid).set({
-        studentUid, subject, grade,
-        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-      });
+    window.saveGrade = async (uid) => {
+      const subject = document.getElementById('subj_'+uid).value;
+      const grade = document.getElementById('grade_'+uid).value;
+      await supabase.from('grades').upsert({ student_id: uid, subject, grade, updated_at: new Date() }, { onConflict: 'student_id' });
       alert('Оценка сохранена!');
     };
 
-    // Курсант: мои оценки
     async function loadStudentGrades() {
       const container = document.getElementById('studentGrades');
       if (!currentUser) return;
-      const doc = await db.collection('grades').doc(currentUser.uid).get();
-      if (doc.exists) {
-        const d = doc.data();
-        container.innerHTML = `<table><tr><th>Предмет</th><th>Оценка</th></tr><tr><td>${d.subject||'—'}</td><td>${d.grade||'—'}</td></tr></table>`;
-      } else {
-        container.innerHTML = '<p>Оценок пока нет.</p>';
-      }
+      const { data } = await supabase.from('grades').select('*').eq('student_id', currentUser.id).single();
+      container.innerHTML = data ? `<table><tr><th>Предмет</th><th>Оценка</th></tr><tr><td>${data.subject||'—'}</td><td>${data.grade||'—'}</td></tr></table>` : '<p>Оценок пока нет.</p>';
     }
 
-    // Платное отделение (для авторизованных)
     async function loadPaidContent() {
       const container = document.getElementById('paidContent');
-      if (!currentUser) {
-        container.innerHTML = '<p>🔒 Войдите, чтобы увидеть информацию.</p>';
-        return;
-      }
-      try {
-        const snap = await db.collection('paid_sessions').where('studentEmail','==',userEmail).get();
-        if (snap.empty) {
-          container.innerHTML = '<p>У вас нет записей платного отделения.</p>';
-          return;
-        }
-        let html = '';
-        snap.forEach(doc => {
-          const d = doc.data();
-          html += `<div class="paid-card">
-            <strong>🧑‍🏫 Проводит:</strong> ${d.trainer||'—'}<br>
-            <strong>🕒 Время:</strong> ${d.time||'—'}
-          </div>`;
-        });
-        container.innerHTML = html;
-      } catch (e) {
-        container.innerHTML = '<p>Ошибка загрузки.</p>';
-      }
+      if (!currentUser) { container.innerHTML = '<p>🔒 Войдите, чтобы увидеть информацию.</p>'; return; }
+      const { data } = await supabase.from('paid_sessions').select('*').eq('student_username', currentUsername);
+      if (!data?.length) { container.innerHTML = '<p>У вас нет записей платного отделения.</p>'; return; }
+      let html = '';
+      data.forEach(d => html += `<div class="paid-card"><strong>🧑‍🏫 Проводит:</strong> ${d.trainer||'—'}<br><strong>🕒 Время:</strong> ${d.time||'—'}</div>`);
+      container.innerHTML = html;
     }
 
-    // Админка
     async function loadAdminData() {
-      // Пользователи с возможностью смены роли
-      const usersSnap = await db.collection('users').get();
-      let userHtml = '<table><tr><th>Email</th><th>Роль</th><th>Изменить</th></tr>';
-      usersSnap.forEach(doc => {
-        const u = doc.data();
-        const uid = doc.id;
-        userHtml += `<tr>
-          <td>${u.email}</td>
-          <td>${u.role}</td>
-          <td>
-            <select id="roleSelect_${uid}">
-              <option value="student" ${u.role==='student'?'selected':''}>Курсант</option>
-              <option value="teacher" ${u.role==='teacher'?'selected':''}>Преподаватель</option>
-              <option value="admin" ${u.role==='admin'?'selected':''}>Администратор</option>
-            </select>
-            <button onclick="window.updateUserRole('${uid}')" style="margin-left:0.3rem;">Сохранить</button>
-          </td>
-        </tr>`;
+      const { data: users } = await supabase.from('users').select('*');
+      let userHtml = '<table><tr><th>Ник</th><th>Роль</th><th>Изменить</th></tr>';
+      if (users) users.forEach(u => {
+        userHtml += `<tr><td>${u.username}</td><td>${u.role}</td><td><select id="roleSelect_${u.id}"><option value="student" ${u.role==='student'?'selected':''}>Курсант</option><option value="teacher" ${u.role==='teacher'?'selected':''}>Преподаватель</option><option value="admin" ${u.role==='admin'?'selected':''}>Администратор</option></select><button onclick="window.updateUserRole('${u.id}')" style="margin-left:0.3rem;">Сохранить</button></td></tr>`;
       });
       userHtml += '</table>';
       document.getElementById('adminUsers').innerHTML = userHtml;
 
-      // Расписание
-      const schedSnap = await db.collection('schedule').get();
+      const { data: sched } = await supabase.from('schedule').select('*');
       let schedHtml = '';
-      schedSnap.forEach(doc => {
-        const s = doc.data();
-        schedHtml += `<div>${s.day} ${s.time} — ${s.subject} (${s.teacher}) <button onclick="window.deleteItem('schedule','${doc.id}')">❌</button></div>`;
-      });
+      if (sched) sched.forEach(s => schedHtml += `<div>${s.day} ${s.time} — ${s.subject} (${s.teacher}) <button onclick="window.deleteItem('schedule',${s.id})">❌</button></div>`);
       document.getElementById('adminScheduleList').innerHTML = schedHtml || '—';
 
-      // Платное
-      const paidSnap = await db.collection('paid_sessions').get();
+      const { data: paid } = await supabase.from('paid_sessions').select('*');
       let paidHtml = '';
-      paidSnap.forEach(doc => {
-        const p = doc.data();
-        paidHtml += `<div>${p.studentEmail} | ${p.trainer} | ${p.time} <button onclick="window.deleteItem('paid_sessions','${doc.id}')">❌</button></div>`;
-      });
+      if (paid) paid.forEach(p => paidHtml += `<div>${p.student_username} | ${p.trainer} | ${p.time} <button onclick="window.deleteItem('paid_sessions',${p.id})">❌</button></div>`);
       document.getElementById('adminPaidList').innerHTML = paidHtml || '—';
     }
 
-    window.updateUserRole = async function(uid) {
-      const select = document.getElementById('roleSelect_' + uid);
-      const newRole = select.value;
-      await db.collection('users').doc(uid).update({ role: newRole });
+    window.updateUserRole = async (uid) => {
+      const newRole = document.getElementById('roleSelect_'+uid).value;
+      await supabase.from('users').update({ role: newRole }).eq('id', uid);
       alert('Роль обновлена!');
       loadAdminData();
     };
-    window.deleteItem = async (collection, docId) => {
-      await db.collection(collection).doc(docId).delete();
+    window.deleteItem = async (table, id) => {
+      await supabase.from(table).delete().eq('id', id);
       loadAdminData();
     };
 
@@ -440,22 +373,21 @@
       const subject = document.getElementById('schedSubject').value.trim();
       const teacher = document.getElementById('schedTeacher').value.trim();
       if (!day || !time || !subject) return alert('Заполните поля');
-      await db.collection('schedule').add({ day, time, subject, teacher });
+      await supabase.from('schedule').insert([{ day, time, subject, teacher }]);
       ['schedDay','schedTime','schedSubject','schedTeacher'].forEach(id => document.getElementById(id).value='');
-      loadAdminData();
-      loadSchedulePublic();
+      loadAdminData(); loadSchedulePublic();
     });
+
     document.getElementById('addPaidBtn').addEventListener('click', async () => {
-      const studentEmail = document.getElementById('paidStudent').value.trim();
+      const studentUsername = document.getElementById('paidStudent').value.trim();
       const trainer = document.getElementById('paidTrainer').value.trim();
       const time = document.getElementById('paidTime').value.trim();
-      if (!studentEmail || !trainer || !time) return alert('Заполните все поля');
-      await db.collection('paid_sessions').add({ studentEmail, trainer, time });
+      if (!studentUsername || !trainer || !time) return alert('Заполните все поля');
+      await supabase.from('paid_sessions').insert([{ student_username: studentUsername, trainer, time }]);
       ['paidStudent','paidTrainer','paidTime'].forEach(id => document.getElementById(id).value='');
       loadAdminData();
     });
 
-    // Старт
     showPage('schedule');
     loadSchedulePublic();
   })();
