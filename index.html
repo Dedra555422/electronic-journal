@@ -77,7 +77,7 @@
         <div id="registerMessage"></div>
         <input type="text" id="regUsername" placeholder="Придумайте ник">
         <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)">
-        <p style="font-size:0.9rem; color:#475569; margin-bottom:1rem;">⏳ Роль назначит администратор</p>
+        <p style="font-size:0.9rem; color:#475569; margin-bottom:1rem;">⏳ Первый пользователь станет администратором</p>
         <button class="btn-primary" id="registerSubmit">Зарегистрироваться</button>
       </div>
     </div>
@@ -200,7 +200,6 @@
     supabase.auth.onAuthStateChange(async (event, session) => {
       if (session?.user) {
         currentUser = session.user;
-        // Получаем данные пользователя из таблицы users
         const { data: userData, error } = await supabase
           .from('users')
           .select('username, role')
@@ -226,7 +225,7 @@
       }
     });
 
-    // Регистрация по нику
+    // Регистрация с автоприсвоением роли админа первому пользователю
     document.getElementById('registerSubmit').addEventListener('click', async () => {
       const msg = document.getElementById('registerMessage');
       msg.innerHTML = '';
@@ -236,13 +235,16 @@
         msg.innerHTML = '<div class="message error">Введите ник и пароль (мин 6 символов)</div>';
         return;
       }
-      // Проверяем, нет ли уже такого ника
-      const { data: existing } = await supabase.from('users').select('username').eq('username', username).single();
-      if (existing) {
-        msg.innerHTML = '<div class="message error">Этот ник уже занят. Выберите другой.</div>';
+      // Проверяем, есть ли уже пользователи
+      const { count, error: countError } = await supabase
+        .from('users')
+        .select('*', { count: 'exact', head: true });
+      if (countError) {
+        msg.innerHTML = `<div class="message error">Ошибка проверки: ${countError.message}</div>`;
         return;
       }
-      // Генерируем фиктивный email
+      const role = count === 0 ? 'admin' : 'pending';
+
       const fakeEmail = `${username}@journal.local`;
       const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
       if (error) {
@@ -251,14 +253,18 @@
       }
       if (data.user) {
         const { error: insertError } = await supabase.from('users').insert([
-          { id: data.user.id, username, email: fakeEmail, role: 'pending' }
+          { id: data.user.id, username, email: fakeEmail, role: role }
         ]);
         if (insertError) {
           msg.innerHTML = '<div class="message error">Ошибка сохранения пользователя.</div>';
           return;
         }
       }
-      msg.innerHTML = '<div class="message success">Регистрация успешна! Ожидайте подтверждения администратора.</div>';
+      if (role === 'admin') {
+        msg.innerHTML = '<div class="message success">Вы зарегистрированы как администратор! Войдите, чтобы продолжить.</div>';
+      } else {
+        msg.innerHTML = '<div class="message success">Регистрация успешна! Ожидайте подтверждения администратора.</div>';
+      }
       setTimeout(() => showPage('login'), 1500);
     });
 
@@ -272,7 +278,6 @@
         msg.innerHTML = '<div class="message error">Введите ник и пароль</div>';
         return;
       }
-      // Ищем email по нику
       const { data: userRow, error: findError } = await supabase
         .from('users')
         .select('email')
