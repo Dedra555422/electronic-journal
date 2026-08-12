@@ -147,19 +147,21 @@ td input[type="text"], td select { padding: 0.5rem; border-radius: 0.5rem; borde
   width: 86px;
   height: 44px;
   border-radius: 50px;
-  border: none;
+  /* Добавлена черная обводка толщиной 2px для светлой темы */
+  border: 2px solid #0f172a; 
   cursor: pointer;
-  background: #e2e8f0; /* Внутренняя тень трека (светлая тема) */
+  background: #e2e8f0; 
   box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.15), 0 4px 15px rgba(0, 0, 0, 0.1);
   z-index: 9999;
   padding: 0;
-  transition: background-color 0.5s ease, box-shadow 0.5s ease;
+  transition: background-color 0.5s ease, box-shadow 0.5s ease, border-color 0.5s ease;
   overflow: hidden;
   outline: none;
 }
 
 [data-theme="dark"] .theme-toggle-switch {
-  background: #1e293b; /* Внутренняя тень трека (темная тема) */
+  background: #1e293b; 
+  border-color: #334155; /* В темной теме граница становится менее контрастной */
   box-shadow: inset 0 2px 8px rgba(0, 0, 0, 0.5), 0 4px 15px rgba(0, 0, 0, 0.4);
 }
 
@@ -183,7 +185,7 @@ td input[type="text"], td select { padding: 0.5rem; border-radius: 0.5rem; borde
 
 /* Светлая тема: яркое солнце, блеклая луна */
 .switch-track .sun {
-  color: #f59e0b; /* Оранжево-желтый */
+  color: #f59e0b; 
   opacity: 1;
   transform: scale(1) rotate(0);
 }
@@ -202,20 +204,19 @@ td input[type="text"], td select { padding: 0.5rem; border-radius: 0.5rem; borde
 [data-theme="dark"] .switch-track .moon {
   opacity: 1;
   transform: scale(1) rotate(0);
-  color: #60a5fa; /* Светящийся синий */
+  color: #60a5fa; 
 }
 
 /* Ползунок (Thumb) */
 .switch-thumb {
   position: absolute;
-  top: 4px;
-  left: 4px;
+  top: 2px; /* Скорректировано с учетом рамки */
+  left: 2px; /* Скорректировано с учетом рамки */
   width: 36px;
   height: 36px;
   border-radius: 50%;
   background: linear-gradient(145deg, #ffffff, #f1f5f9);
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2), inset 0 -2px 4px rgba(0, 0, 0, 0.05);
-  /* Эффект пружинки при движении */
   transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1), background-color 0.5s ease; 
   z-index: 2;
 }
