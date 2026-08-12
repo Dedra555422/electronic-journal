@@ -5,7 +5,6 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
   <title>Электронный журнал оценок</title>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Подключение стилей -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,10 +16,15 @@
       <button data-page="login">🔐 Вход</button>
       <button data-page="register">📝 Регистрация</button>
     </nav>
-    <div class="user-bar" id="userBar" style="display:none;">
-      <span class="role-badge" id="roleBadge"></span>
-      <span id="userDisplayName"></span>
-      <button id="logoutBtn">Выйти</button>
+    <div class="header-right">
+      <!-- Кнопка переключения темы -->
+      <button id="themeToggle" class="theme-toggle" aria-label="Переключить тему">🌙</button>
+      
+      <div class="user-bar" id="userBar" style="display:none;">
+        <span class="role-badge" id="roleBadge"></span>
+        <span id="userDisplayName"></span>
+        <button id="logoutBtn">Выйти</button>
+      </div>
     </div>
   </header>
   <main>
@@ -51,7 +55,7 @@
         <button class="btn-primary" id="registerSubmit">Зарегистрироваться</button>
       </div>
     </div>
-    <!-- Дашборд преподавателя (общий журнал) -->
+    <!-- Дашборд преподавателя -->
     <div class="page" id="page-teacher">
       <h2>👨‍🏫 Журнал оценок (все отделения)</h2>
       <div id="teacherGrades"></div>
@@ -72,7 +76,7 @@
       <div class="admin-controls">
         <div class="card">
           <h3>👥 Управление пользователями</h3>
-          <div id="adminUsers"></div>
+          <div id="adminUsers" style="overflow-x: auto;"></div>
         </div>
         <div class="card">
           <h3>📅 Управление расписанием</h3>
@@ -103,7 +107,7 @@
         </div>
         <div class="dept-table">
           <h3>Курсанты и оценки</h3>
-          <div id="deptRegularTable"></div>
+          <div id="deptRegularTable" style="overflow-x: auto;"></div>
         </div>
       </div>
     </div>
@@ -117,7 +121,7 @@
         </div>
         <div class="dept-table">
           <h3>Курсанты и оценки</h3>
-          <div id="deptPaidTable"></div>
+          <div id="deptPaidTable" style="overflow-x: auto;"></div>
         </div>
       </div>
     </div>
@@ -131,7 +135,6 @@
     </div>
   </main>
 </div>
-<!-- Подключение логики -->
 <script src="script.js" defer></script>
 </body>
 </html>
