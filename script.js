@@ -8,7 +8,6 @@
   const currentTheme = localStorage.getItem('theme') || 'light';
   if (currentTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
-    themeToggleBtn.textContent = '☀️';
   }
 
   // Обработчик нажатия на кнопку смены темы
@@ -17,11 +16,9 @@
     if (theme === 'dark') {
       document.documentElement.removeAttribute('data-theme');
       localStorage.setItem('theme', 'light');
-      themeToggleBtn.textContent = '🌙';
     } else {
       document.documentElement.setAttribute('data-theme', 'dark');
       localStorage.setItem('theme', 'dark');
-      themeToggleBtn.textContent = '☀️';
     }
   });
 
