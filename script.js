@@ -1,4 +1,34 @@
 (function() {
+  // ==========================================
+  // ЛОГИКА ТЕМНОЙ ТЕМЫ
+  // ==========================================
+  const themeToggleBtn = document.getElementById('themeToggle');
+  
+  // Проверяем сохраненную тему в localStorage
+  const currentTheme = localStorage.getItem('theme') || 'light';
+  if (currentTheme === 'dark') {
+    document.documentElement.setAttribute('data-theme', 'dark');
+    themeToggleBtn.textContent = '☀️';
+  }
+
+  // Обработчик нажатия на кнопку смены темы
+  themeToggleBtn.addEventListener('click', () => {
+    let theme = document.documentElement.getAttribute('data-theme');
+    if (theme === 'dark') {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('theme', 'light');
+      themeToggleBtn.textContent = '🌙';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'dark');
+      localStorage.setItem('theme', 'dark');
+      themeToggleBtn.textContent = '☀️';
+    }
+  });
+
+
+  // ==========================================
+  // ОСНОВНАЯ ЛОГИКА SUPABASE И ЖУРНАЛА
+  // ==========================================
   const SUPABASE_URL = 'https://ucbnqqlpflwaainfpxxv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_mU-PHJl92-VjcMz3ZiPOvg_RSz3JETp';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -448,12 +478,12 @@
 
     const { data: sched } = await supabase.from('schedule').select('*');
     let schedHtml = '';
-    if (sched) sched.forEach(s => schedHtml += `<div><span>${s.day} ${s.time} — ${s.subject} (${s.teacher})</span> <button onclick="window.deleteItem('schedule',${s.id})" style="border:none; background:transparent; cursor:pointer;">❌</button></div>`);
+    if (sched) sched.forEach(s => schedHtml += `<div><span>${s.day} ${s.time} — ${s.subject} (${s.teacher})</span> <button onclick="window.deleteItem('schedule',${s.id})" style="border:none; background:transparent; cursor:pointer; font-size:1.2rem;">❌</button></div>`);
     document.getElementById('adminScheduleList').innerHTML = schedHtml || '—';
 
     const { data: paid } = await supabase.from('paid_sessions').select('*');
     let paidHtml = '';
-    if (paid) paid.forEach(p => paidHtml += `<div><span>${p.student_username} | ${p.trainer} | ${p.time}</span> <button onclick="window.deleteItem('paid_sessions',${p.id})" style="border:none; background:transparent; cursor:pointer;">❌</button></div>`);
+    if (paid) paid.forEach(p => paidHtml += `<div><span>${p.student_username} | ${p.trainer} | ${p.time}</span> <button onclick="window.deleteItem('paid_sessions',${p.id})" style="border:none; background:transparent; cursor:pointer; font-size:1.2rem;">❌</button></div>`);
     document.getElementById('adminPaidList').innerHTML = paidHtml || '—';
   }
 
