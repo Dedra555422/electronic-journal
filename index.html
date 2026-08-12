@@ -58,12 +58,10 @@
     </div>
   </header>
   <main>
-    <!-- Публичное расписание -->
     <div class="page active" id="page-schedule">
       <h2>📅 Актуальное расписание</h2>
       <div id="scheduleContent">Загрузка...</div>
     </div>
-    <!-- Вход -->
     <div class="page" id="page-login">
       <div class="form-card">
         <h2>Вход</h2>
@@ -73,7 +71,6 @@
         <button class="btn-primary" id="loginSubmit">Войти</button>
       </div>
     </div>
-    <!-- Регистрация -->
     <div class="page" id="page-register">
       <div class="form-card">
         <h2>Регистрация</h2>
@@ -81,26 +78,22 @@
         <input type="text" id="regUsername" placeholder="Придумайте ник">
         <input type="password" id="regPassword" placeholder="Пароль (мин. 6 символов)">
         <input type="text" id="regFullName" placeholder="Фамилия Имя Отчество (необязательно)">
-        <p style="font-size:0.9rem; color:#475569; margin-bottom:1rem;">⏳ Первый пользователь станет администратором</p>
+        <p style="font-size:0.9rem; color:#475569; margin-bottom:1rem;">⏳ Каждый новый пользователь временно получает роль администратора</p>
         <button class="btn-primary" id="registerSubmit">Зарегистрироваться</button>
       </div>
     </div>
-    <!-- Дашборд преподавателя -->
     <div class="page" id="page-teacher">
       <h2>👨‍🏫 Журнал оценок (преподаватель)</h2>
       <div id="teacherGrades"></div>
     </div>
-    <!-- Дашборд курсанта -->
     <div class="page" id="page-student">
       <h2>📖 Мои оценки</h2>
       <div id="studentGrades"></div>
     </div>
-    <!-- Платное отделение -->
     <div class="page" id="page-paid">
       <h2>💎 Платное отделение — информация о занятиях</h2>
       <div id="paidContent"></div>
     </div>
-    <!-- Админ-панель -->
     <div class="page" id="page-admin">
       <h2>⚙️ Панель администратора</h2>
       <div class="admin-controls">
@@ -127,7 +120,6 @@
         </div>
       </div>
     </div>
-    <!-- Ожидание подтверждения -->
     <div class="page" id="page-pending">
       <div class="pending-message">
         <h2>⏳ Ожидание подтверждения</h2>
@@ -143,7 +135,6 @@
     const SUPABASE_ANON_KEY = 'sb_publishable_mU-PHJl92-VjcMz3ZiPOvg_RSz3JETp';
     const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    // Предметы по отделениям
     const SUBJECTS = {
       'обычное': ['Военное право', 'Военная подготовка', 'Военно-тактическая подготовка'],
       'платное': ['Военное право', 'Военная подготовка', 'Военно-тактическая подготовка', 'Совместная тренировка с военной прокуратурой']
@@ -246,26 +237,18 @@
       }
     });
 
-    // Регистрация (с ФИО)
+    // Регистрация: каждый новый пользователь получает роль admin (временно)
     document.getElementById('registerSubmit').addEventListener('click', async () => {
       const msg = document.getElementById('registerMessage');
       msg.innerHTML = '';
       const username = document.getElementById('regUsername').value.trim();
       const password = document.getElementById('regPassword').value;
       const fullName = document.getElementById('regFullName').value.trim();
+
       if (!username || password.length < 6) {
         msg.innerHTML = '<div class="message error">Введите ник и пароль (мин 6 символов)</div>';
         return;
       }
-      // Проверяем, есть ли уже пользователи
-      const { count, error: countError } = await supabase
-        .from('users')
-        .select('*', { count: 'exact', head: true });
-      if (countError) {
-        msg.innerHTML = `<div class="message error">Ошибка проверки: ${countError.message}</div>`;
-        return;
-      }
-      const role = count === 0 ? 'admin' : 'pending';
 
       const fakeEmail = `${username}@journal.local`;
       const { data, error } = await supabase.auth.signUp({ email: fakeEmail, password });
@@ -273,20 +256,25 @@
         msg.innerHTML = `<div class="message error">${error.message}</div>`;
         return;
       }
+
       if (data.user) {
         const { error: insertError } = await supabase.from('users').insert([
-          { id: data.user.id, username, email: fakeEmail, full_name: fullName, department: 'обычное', role: role }
+          {
+            id: data.user.id,
+            username: username,
+            email: fakeEmail,
+            full_name: fullName,
+            department: 'обычное',
+            role: 'admin'   // временно все админы
+          }
         ]);
         if (insertError) {
-          msg.innerHTML = '<div class="message error">Ошибка сохранения пользователя.</div>';
+          msg.innerHTML = '<div class="message error">Ошибка сохранения пользователя. Возможно, ник уже занят.</div>';
           return;
         }
       }
-      if (role === 'admin') {
-        msg.innerHTML = '<div class="message success">Вы зарегистрированы как администратор! Войдите, чтобы продолжить.</div>';
-      } else {
-        msg.innerHTML = '<div class="message success">Регистрация успешна! Ожидайте подтверждения администратора.</div>';
-      }
+
+      msg.innerHTML = '<div class="message success">Вы зарегистрированы как администратор! Войдите, чтобы продолжить.</div>';
       setTimeout(() => showPage('login'), 1500);
     });
 
@@ -330,7 +318,6 @@
     // Преподаватель: журнал с ФИО, отделением и предметами
     async function loadTeacherGrades() {
       const container = document.getElementById('teacherGrades');
-      // Получаем всех студентов
       const { data: students, error: studentError } = await supabase
         .from('users')
         .select('id, username, full_name, department')
@@ -338,7 +325,6 @@
       if (studentError) { container.innerHTML = '<p>Ошибка загрузки студентов.</p>'; return; }
       if (!students || students.length === 0) { container.innerHTML = '<p>Нет зарегистрированных курсантов.</p>'; return; }
 
-      // Получаем все оценки
       const { data: grades } = await supabase.from('grades').select('student_id, subject, grade');
       const gradesMap = {};
       if (grades) {
@@ -348,9 +334,7 @@
         });
       }
 
-      // Строим таблицу
       let html = '<table><tr><th>ФИО</th><th>Отделение</th>';
-      // Заголовки предметов: объединяем все возможные
       const allSubjects = Object.values(SUBJECTS).flat();
       allSubjects.forEach(subj => html += `<th>${subj}</th>`);
       html += '<th></th></tr>';
@@ -361,7 +345,6 @@
         html += `<tr>`;
         html += `<td>${student.full_name || student.username}</td>`;
         html += `<td>${dept}</td>`;
-        // Для каждого предмета из полного списка выводим поле, но только если предмет есть в отделении
         allSubjects.forEach(subj => {
           if (subjectsForDept.includes(subj)) {
             const currentGrade = gradesMap[student.id]?.[subj] || '';
@@ -377,9 +360,7 @@
       container.innerHTML = html;
     }
 
-    // Сохранение всех оценок для одного студента
     window.saveStudentGrades = async (studentId) => {
-      // Находим отделение студента
       const { data: studentData, error: stError } = await supabase
         .from('users')
         .select('department')
@@ -478,7 +459,6 @@
       userHtml += '</table>';
       document.getElementById('adminUsers').innerHTML = userHtml;
 
-      // Остальное (расписание, платное) без изменений
       const { data: sched } = await supabase.from('schedule').select('*');
       let schedHtml = '';
       if (sched) sched.forEach(s => schedHtml += `<div>${s.day} ${s.time} — ${s.subject} (${s.teacher}) <button onclick="window.deleteItem('schedule',${s.id})">❌</button></div>`);
