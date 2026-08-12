@@ -8,7 +8,7 @@
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; }
     body { background: #f0f4f8; min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 1.5rem; }
-    .app-container { width: 100%; max-width: 1300px; background: white; border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column; min-height: 90vh; }
+    .app-container { width: 100%; max-width: 1400px; background: white; border-radius: 2rem; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25); overflow: hidden; display: flex; flex-direction: column; min-height: 90vh; }
     header { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); color: white; padding: 1rem 2rem; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 1rem; }
     header .logo { font-weight: 700; font-size: 1.4rem; letter-spacing: -0.3px; }
     header .logo span { color: #38bdf8; }
@@ -40,6 +40,9 @@
     .error { background: #fee2e2; color: #991b1b; }
     .success { background: #dcfce7; color: #166534; }
     .pending-message { background: #fff7ed; color: #9a3412; padding: 2rem; border-radius: 1.5rem; text-align: center; }
+    .dept-container { display: flex; flex-wrap: wrap; gap: 1.5rem; }
+    .dept-schedule { flex: 1 1 350px; }
+    .dept-table { flex: 2 1 600px; }
   </style>
 </head>
 <body>
@@ -58,10 +61,12 @@
     </div>
   </header>
   <main>
+    <!-- Публичное расписание -->
     <div class="page active" id="page-schedule">
       <h2>📅 Актуальное расписание</h2>
       <div id="scheduleContent">Загрузка...</div>
     </div>
+    <!-- Вход -->
     <div class="page" id="page-login">
       <div class="form-card">
         <h2>Вход</h2>
@@ -71,6 +76,7 @@
         <button class="btn-primary" id="loginSubmit">Войти</button>
       </div>
     </div>
+    <!-- Регистрация -->
     <div class="page" id="page-register">
       <div class="form-card">
         <h2>Регистрация</h2>
@@ -82,18 +88,22 @@
         <button class="btn-primary" id="registerSubmit">Зарегистрироваться</button>
       </div>
     </div>
+    <!-- Дашборд преподавателя (общий журнал) -->
     <div class="page" id="page-teacher">
-      <h2>👨‍🏫 Журнал оценок (преподаватель)</h2>
+      <h2>👨‍🏫 Журнал оценок (все отделения)</h2>
       <div id="teacherGrades"></div>
     </div>
+    <!-- Дашборд курсанта -->
     <div class="page" id="page-student">
       <h2>📖 Мои оценки</h2>
       <div id="studentGrades"></div>
     </div>
+    <!-- Платное отделение -->
     <div class="page" id="page-paid">
       <h2>💎 Платное отделение — информация о занятиях</h2>
       <div id="paidContent"></div>
     </div>
+    <!-- Админ-панель -->
     <div class="page" id="page-admin">
       <h2>⚙️ Панель администратора</h2>
       <div class="admin-controls">
@@ -120,6 +130,35 @@
         </div>
       </div>
     </div>
+    <!-- Обычное отделение -->
+    <div class="page" id="page-dept-regular">
+      <h2>📘 Обычное отделение</h2>
+      <div class="dept-container">
+        <div class="dept-schedule">
+          <h3>Расписание</h3>
+          <div id="deptRegularSchedule"></div>
+        </div>
+        <div class="dept-table">
+          <h3>Курсанты и оценки</h3>
+          <div id="deptRegularTable"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Платное отделение -->
+    <div class="page" id="page-dept-paid">
+      <h2>💎 Платное отделение</h2>
+      <div class="dept-container">
+        <div class="dept-schedule">
+          <h3>Расписание</h3>
+          <div id="deptPaidSchedule"></div>
+        </div>
+        <div class="dept-table">
+          <h3>Курсанты и оценки</h3>
+          <div id="deptPaidTable"></div>
+        </div>
+      </div>
+    </div>
+    <!-- Ожидание подтверждения -->
     <div class="page" id="page-pending">
       <div class="pending-message">
         <h2>⏳ Ожидание подтверждения</h2>
@@ -148,6 +187,8 @@
       student: document.getElementById('page-student'),
       paid: document.getElementById('page-paid'),
       admin: document.getElementById('page-admin'),
+      deptRegular: document.getElementById('page-dept-regular'),
+      deptPaid: document.getElementById('page-dept-paid'),
       pending: document.getElementById('page-pending')
     };
     let currentUser = null;
@@ -178,16 +219,37 @@
         badge.classList.remove('pending');
         if (userRole === 'teacher') {
           badge.textContent = 'Преподаватель';
-          mainNav.innerHTML = '<button data-page="teacher">📝 Журнал</button><button data-page="schedule">📅 Расписание</button><button data-page="paid">💎 Платное</button>';
-          showPage('teacher');
+          mainNav.innerHTML = `
+            <button data-page="dept-regular">📘 Обычное отделение</button>
+            <button data-page="dept-paid">💎 Платное отделение</button>
+            <button data-page="teacher">📝 Весь журнал</button>
+            <button data-page="schedule">📅 Расписание</button>
+            <button data-page="paid">💎 Платное</button>
+          `;
+          showPage('dept-regular'); // по умолчанию открываем обычное отделение
+          loadDepartmentPage('обычное');
         } else if (userRole === 'student') {
           badge.textContent = 'Курсант';
-          mainNav.innerHTML = '<button data-page="student">📖 Оценки</button><button data-page="schedule">📅 Расписание</button><button data-page="paid">💎 Платное</button>';
+          mainNav.innerHTML = `
+            <button data-page="student">📖 Оценки</button>
+            <button data-page="schedule">📅 Расписание</button>
+            <button data-page="paid">💎 Платное</button>
+          `;
           showPage('student');
+          loadStudentGrades();
         } else if (userRole === 'admin') {
           badge.textContent = 'Администратор';
-          mainNav.innerHTML = '<button data-page="admin">⚙️ Админ</button><button data-page="schedule">📅 Расписание</button><button data-page="paid">💎 Платное</button>';
+          mainNav.innerHTML = `
+            <button data-page="dept-regular">📘 Обычное отделение</button>
+            <button data-page="dept-paid">💎 Платное отделение</button>
+            <button data-page="admin">⚙️ Админ</button>
+            <button data-page="schedule">📅 Расписание</button>
+            <button data-page="paid">💎 Платное</button>
+          `;
           showPage('admin');
+          loadAdminData();
+          loadDepartmentPage('обычное');
+          loadDepartmentPage('платное');
         } else if (userRole === 'pending') {
           badge.textContent = 'Ожидание';
           badge.classList.add('pending');
@@ -230,6 +292,11 @@
         if (userRole === 'admin') loadAdminData();
         loadSchedulePublic();
         loadPaidContent();
+        // Дополнительно загружаем данные отделений, если они открыты
+        if (userRole === 'teacher' || userRole === 'admin') {
+          loadDepartmentPage('обычное');
+          loadDepartmentPage('платное');
+        }
       } else {
         currentUser = null; userRole = null; currentUsername = '';
         updateUIForUser(null);
@@ -265,7 +332,7 @@
             email: fakeEmail,
             full_name: fullName,
             department: 'обычное',
-            role: 'admin'   // временно все админы
+            role: 'admin'
           }
         ]);
         if (insertError) {
@@ -304,7 +371,7 @@
       if (error) msg.innerHTML = `<div class="message error">${error.message}</div>`;
     });
 
-    // Загрузка расписания
+    // Загрузка публичного расписания
     async function loadSchedulePublic() {
       const container = document.getElementById('scheduleContent');
       const { data, error } = await supabase.from('schedule').select('*').order('day');
@@ -315,7 +382,111 @@
       container.innerHTML = html;
     }
 
-    // Преподаватель: журнал с ФИО, отделением и предметами
+    // Универсальная загрузка страницы отделения
+    async function loadDepartmentPage(department) {
+      const scheduleContainer = department === 'обычное' 
+        ? document.getElementById('deptRegularSchedule') 
+        : document.getElementById('deptPaidSchedule');
+      const tableContainer = department === 'обычное' 
+        ? document.getElementById('deptRegularTable') 
+        : document.getElementById('deptPaidTable');
+
+      // Фильтруем расписание по предметам этого отделения
+      const subjects = SUBJECTS[department] || [];
+      const { data: scheduleData, error: scheduleError } = await supabase
+        .from('schedule')
+        .select('*')
+        .order('day');
+      if (scheduleError) {
+        scheduleContainer.innerHTML = '<p>Ошибка загрузки расписания.</p>';
+      } else if (!scheduleData || scheduleData.length === 0) {
+        scheduleContainer.innerHTML = '<p>Расписание пока пусто.</p>';
+      } else {
+        const filtered = scheduleData.filter(item => subjects.includes(item.subject));
+        if (filtered.length === 0) {
+          scheduleContainer.innerHTML = '<p>Нет занятий по предметам этого отделения.</p>';
+        } else {
+          let html = '<table class="schedule-table"><tr><th>День</th><th>Время</th><th>Предмет</th><th>Преподаватель</th></tr>';
+          filtered.forEach(d => html += `<tr><td>${d.day||''}</td><td>${d.time||''}</td><td>${d.subject||''}</td><td>${d.teacher||''}</td></tr>`);
+          html += '</table>';
+          scheduleContainer.innerHTML = html;
+        }
+      }
+
+      // Получаем студентов этого отделения
+      const { data: students, error: studentError } = await supabase
+        .from('users')
+        .select('id, username, full_name')
+        .eq('role', 'student')
+        .eq('department', department);
+      if (studentError) {
+        tableContainer.innerHTML = '<p>Ошибка загрузки студентов.</p>';
+        return;
+      }
+      if (!students || students.length === 0) {
+        tableContainer.innerHTML = '<p>Нет курсантов в этом отделении.</p>';
+        return;
+      }
+
+      // Получаем все оценки
+      const { data: grades } = await supabase.from('grades').select('student_id, subject, grade');
+      const gradesMap = {};
+      if (grades) {
+        grades.forEach(g => {
+          if (!gradesMap[g.student_id]) gradesMap[g.student_id] = {};
+          gradesMap[g.student_id][g.subject] = g.grade;
+        });
+      }
+
+      // Строим таблицу
+      const allSubjects = SUBJECTS[department] || [];
+      let html = '<table><tr><th>ФИО</th>';
+      allSubjects.forEach(subj => html += `<th>${subj}</th>`);
+      html += '<th></th></tr>';
+
+      students.forEach(student => {
+        html += `<tr>`;
+        html += `<td>${student.full_name || student.username}</td>`;
+        allSubjects.forEach(subj => {
+          const currentGrade = gradesMap[student.id]?.[subj] || '';
+          html += `<td><input class="grade-input" type="number" min="2" max="5" id="dept_grade_${student.id}_${subj.replace(/ /g,'_')}" value="${currentGrade}"></td>`;
+        });
+        html += `<td><button class="btn-primary" style="width:auto; padding:0.4rem 1rem;" onclick="window.saveDeptStudentGrades('${student.id}', '${department}')">💾 Сохранить</button></td>`;
+        html += `</tr>`;
+      });
+      html += '</table>';
+      tableContainer.innerHTML = html;
+    }
+
+    // Сохранение оценок для студента на странице отделения
+    window.saveDeptStudentGrades = async (studentId, department) => {
+      const subjects = SUBJECTS[department] || [];
+      const rows = [];
+      for (const subj of subjects) {
+        const inputId = `dept_grade_${studentId}_${subj.replace(/ /g,'_')}`;
+        const input = document.getElementById(inputId);
+        if (input) {
+          const val = input.value.trim();
+          if (val) {
+            const num = parseInt(val, 10);
+            if (num >= 2 && num <= 5) {
+              rows.push({ student_id: studentId, subject: subj, grade: num, updated_at: new Date() });
+            } else {
+              alert(`Оценка по предмету "${subj}" должна быть от 2 до 5`);
+              return;
+            }
+          }
+        }
+      }
+      if (rows.length === 0) { alert('Нет оценок для сохранения'); return; }
+      const { error } = await supabase
+        .from('grades')
+        .upsert(rows, { onConflict: 'student_id,subject' });
+      if (error) { alert('Ошибка сохранения: ' + error.message); return; }
+      alert('Оценки сохранены!');
+    };
+
+    // Преподаватель: общий журнал (все отделения)
     async function loadTeacherGrades() {
       const container = document.getElementById('teacherGrades');
       const { data: students, error: studentError } = await supabase
@@ -497,6 +668,9 @@
       await supabase.from('schedule').insert([{ day, time, subject, teacher }]);
       ['schedDay','schedTime','schedSubject','schedTeacher'].forEach(id => document.getElementById(id).value='');
       loadAdminData(); loadSchedulePublic();
+      // Обновляем и страницы отделений
+      loadDepartmentPage('обычное');
+      loadDepartmentPage('платное');
     });
 
     // Добавление платного занятия
