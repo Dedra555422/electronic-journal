@@ -17,7 +17,6 @@
       <button data-page="register">📝 Регистрация</button>
     </nav>
     <div class="header-right">
-      <!-- Аккаунт теперь справа -->
       <div class="user-bar" id="userBar" style="display:none;">
         <span class="role-badge" id="roleBadge"></span>
         <span id="userDisplayName"></span>
@@ -63,6 +62,11 @@
       <h2>📖 Мои оценки</h2>
       <div id="studentGrades"></div>
     </div>
+    <!-- Обычное отделение (Информация для курсантов) -->
+    <div class="page" id="page-regular-info">
+      <h2>📘 Обычное отделение — информация о занятиях</h2>
+      <div id="regularContent"></div>
+    </div>
     <!-- Платное отделение (Информация для курсантов) -->
     <div class="page" id="page-paid">
       <h2>💎 Платное отделение — информация о занятиях</h2>
@@ -72,11 +76,9 @@
     <div class="page" id="page-admin">
       <h2>⚙️ Панель администратора</h2>
       <div class="admin-controls">
-        <div class="card card-wide">
-          <h3>👥 Управление пользователями</h3>
-          <div id="adminUsers" class="admin-users-grid"></div>
-        </div>
-        <div class="card">
+        
+        <!-- Левая колонка 1: Управление расписанием -->
+        <div class="card schedule-card">
           <h3>📅 Управление расписанием</h3>
           <input type="text" id="schedDay" placeholder="День (Пн)">
           <input type="text" id="schedTime" placeholder="Время (09:00)">
@@ -85,7 +87,25 @@
           <button class="btn-primary" id="addScheduleBtn">Добавить</button>
           <div id="adminScheduleList" class="list-container"></div>
         </div>
-        <div class="card">
+
+        <!-- Правая колонка: Управление пользователями (Занимает всю высоту справа) -->
+        <div class="card users-card">
+          <h3>👥 Управление пользователями</h3>
+          <div id="adminUsers" class="admin-users-grid"></div>
+        </div>
+
+        <!-- Левая колонка 2: Обычное отделение (добавление записей) -->
+        <div class="card regular-card">
+          <h3>📘 Обычное отделение (записи)</h3>
+          <input type="text" id="regStudent" placeholder="Ник курсанта">
+          <input type="text" id="regTrainer" placeholder="Кто проводит">
+          <input type="text" id="regTime" placeholder="Время и дата">
+          <button class="btn-primary" id="addRegBtn">Добавить запись</button>
+          <div id="adminRegList" class="list-container"></div>
+        </div>
+
+        <!-- Левая колонка 3: Платное отделение (добавление записей) -->
+        <div class="card paid-card-admin">
           <h3>💎 Платное отделение (записи)</h3>
           <input type="text" id="paidStudent" placeholder="Ник курсанта">
           <input type="text" id="paidTrainer" placeholder="Кто проводит">
@@ -93,14 +113,15 @@
           <button class="btn-primary" id="addPaidBtn">Добавить запись</button>
           <div id="adminPaidList" class="list-container"></div>
         </div>
+
       </div>
     </div>
-    <!-- Обычное отделение -->
+    <!-- Журнал Обычного отделения -->
     <div class="page" id="page-dept-regular">
-      <h2>📘 Обычное отделение</h2>
+      <h2>📘 Обычный отдел</h2>
       <div class="dept-container">
         <div class="dept-schedule">
-          <h3>Расписание отделения</h3>
+          <h3>Расписание отдела</h3>
           <div id="deptRegularSchedule"></div>
         </div>
         <div class="dept-table">
@@ -109,12 +130,12 @@
         </div>
       </div>
     </div>
-    <!-- Платное отделение -->
+    <!-- Журнал Платного отделения -->
     <div class="page" id="page-dept-paid">
-      <h2>💎 Платное отделение</h2>
+      <h2>💎 Платный отдел</h2>
       <div class="dept-container">
         <div class="dept-schedule">
-          <h3>Расписание отделения</h3>
+          <h3>Расписание отдела</h3>
           <div id="deptPaidSchedule"></div>
         </div>
         <div class="dept-table">
@@ -134,7 +155,6 @@
   </main>
 </div>
 
-<!-- Детализированный переключатель темы -->
 <button id="themeToggle" class="theme-toggle-switch" aria-label="Переключить тему">
   <div class="switch-track">
     <svg class="icon sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
