@@ -1,16 +1,10 @@
 (function() {
-  // ==========================================
-  // ЛОГИКА ТЕМНОЙ ТЕМЫ
-  // ==========================================
   const themeToggleBtn = document.getElementById('themeToggle');
-  
-  // Проверяем сохраненную тему в localStorage
   const currentTheme = localStorage.getItem('theme') || 'light';
   if (currentTheme === 'dark') {
     document.documentElement.setAttribute('data-theme', 'dark');
   }
 
-  // Обработчик нажатия на кнопку смены темы
   themeToggleBtn.addEventListener('click', () => {
     let theme = document.documentElement.getAttribute('data-theme');
     if (theme === 'dark') {
@@ -22,10 +16,6 @@
     }
   });
 
-
-  // ==========================================
-  // ОСНОВНАЯ ЛОГИКА SUPABASE И ЖУРНАЛА
-  // ==========================================
   const SUPABASE_URL = 'https://ucbnqqlpflwaainfpxxv.supabase.co';
   const SUPABASE_ANON_KEY = 'sb_publishable_mU-PHJl92-VjcMz3ZiPOvg_RSz3JETp';
   const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
@@ -74,14 +64,15 @@
       document.getElementById('userDisplayName').textContent = currentUsername || 'Пользователь';
       const badge = document.getElementById('roleBadge');
       badge.classList.remove('pending');
+      
+      // Навигация без дублирующейся вкладки «Платное», оставлен «Платный отдел»
       if (userRole === 'teacher') {
         badge.textContent = 'Преподаватель';
         mainNav.innerHTML = `
-          <button data-page="dept-regular">📘 Обычное отделение</button>
-          <button data-page="dept-paid">💎 Платное отделение</button>
+          <button data-page="dept-regular">📘 Обычный отдел</button>
+          <button data-page="dept-paid">💎 Платный отдел</button>
           <button data-page="teacher">📝 Весь журнал</button>
           <button data-page="schedule">📅 Расписание</button>
-          <button data-page="paid">💎 Платное</button>
         `;
         showPage('dept-regular');
         loadDepartmentPage('обычное');
@@ -89,19 +80,18 @@
         badge.textContent = 'Курсант';
         mainNav.innerHTML = `
           <button data-page="student">📖 Оценки</button>
+          <button data-page="paid">💎 Платный отдел</button>
           <button data-page="schedule">📅 Расписание</button>
-          <button data-page="paid">💎 Платное</button>
         `;
         showPage('student');
         loadStudentGrades();
       } else if (userRole === 'admin') {
         badge.textContent = 'Администратор';
         mainNav.innerHTML = `
-          <button data-page="dept-regular">📘 Обычное отделение</button>
-          <button data-page="dept-paid">💎 Платное отделение</button>
+          <button data-page="dept-regular">📘 Обычный отдел</button>
+          <button data-page="dept-paid">💎 Платный отдел</button>
           <button data-page="admin">⚙️ Админ</button>
           <button data-page="schedule">📅 Расписание</button>
-          <button data-page="paid">💎 Платное</button>
         `;
         showPage('admin');
         loadAdminData();
@@ -181,14 +171,7 @@
 
     if (data.user) {
       const { error: insertError } = await supabase.from('users').insert([
-        {
-          id: data.user.id,
-          username: username,
-          email: fakeEmail,
-          full_name: fullName,
-          department: 'обычное',
-          role: 'admin'
-        }
+        { id: data.user.id, username: username, email: fakeEmail, full_name: fullName, department: 'обычное', role: 'admin' }
       ]);
       if (insertError) {
         msg.innerHTML = '<div class="message error">Ошибка сохранения пользователя. Возможно, ник уже занят.</div>';
@@ -209,19 +192,12 @@
       msg.innerHTML = '<div class="message error">Введите ник и пароль</div>';
       return;
     }
-    const { data: userRow, error: findError } = await supabase
-      .from('users')
-      .select('email')
-      .eq('username', username)
-      .single();
+    const { data: userRow, error: findError } = await supabase.from('users').select('email').eq('username', username).single();
     if (findError || !userRow) {
       msg.innerHTML = '<div class="message error">Пользователь с таким ником не найден.</div>';
       return;
     }
-    const { error } = await supabase.auth.signInWithPassword({
-      email: userRow.email,
-      password: password
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email: userRow.email, password: password });
     if (error) msg.innerHTML = `<div class="message error">${error.message}</div>`;
   });
 
@@ -244,13 +220,9 @@
       : document.getElementById('deptPaidTable');
 
     const subjects = SUBJECTS[department] || [];
-    const { data: scheduleData, error: scheduleError } = await supabase
-      .from('schedule')
-      .select('*')
-      .order('day');
-    if (scheduleError) {
-      scheduleContainer.innerHTML = '<p>Ошибка загрузки расписания.</p>';
-    } else if (!scheduleData || scheduleData.length === 0) {
+    const { data: scheduleData } = await supabase.from('schedule').select('*').order('day');
+    
+    if (!scheduleData || scheduleData.length === 0) {
       scheduleContainer.innerHTML = '<p>Расписание пока пусто.</p>';
     } else {
       const filtered = scheduleData.filter(item => subjects.includes(item.subject));
@@ -264,15 +236,7 @@
       }
     }
 
-    const { data: students, error: studentError } = await supabase
-      .from('users')
-      .select('id, username, full_name')
-      .eq('role', 'student')
-      .eq('department', department);
-    if (studentError) {
-      tableContainer.innerHTML = '<p>Ошибка загрузки студентов.</p>';
-      return;
-    }
+    const { data: students } = await supabase.from('users').select('id, username, full_name').eq('role', 'student').eq('department', department);
     if (!students || students.length === 0) {
       tableContainer.innerHTML = '<p>Нет курсантов в этом отделении.</p>';
       return;
@@ -287,15 +251,14 @@
       });
     }
 
-    const allSubjects = SUBJECTS[department] || [];
     let html = '<table><tr><th>ФИО</th>';
-    allSubjects.forEach(subj => html += `<th>${subj}</th>`);
+    subjects.forEach(subj => html += `<th>${subj}</th>`);
     html += '<th></th></tr>';
 
     students.forEach(student => {
       html += `<tr>`;
       html += `<td>${student.full_name || student.username}</td>`;
-      allSubjects.forEach(subj => {
+      subjects.forEach(subj => {
         const currentGrade = gradesMap[student.id]?.[subj] || '';
         html += `<td><input class="grade-input" type="number" min="2" max="5" id="dept_grade_${student.id}_${subj.replace(/ /g,'_')}" value="${currentGrade}"></td>`;
       });
@@ -326,20 +289,14 @@
       }
     }
     if (rows.length === 0) { alert('Нет оценок для сохранения'); return; }
-    const { error } = await supabase
-      .from('grades')
-      .upsert(rows, { onConflict: 'student_id,subject' });
+    const { error } = await supabase.from('grades').upsert(rows, { onConflict: 'student_id,subject' });
     if (error) { alert('Ошибка сохранения: ' + error.message); return; }
     alert('Оценки сохранены!');
   };
 
   async function loadTeacherGrades() {
     const container = document.getElementById('teacherGrades');
-    const { data: students, error: studentError } = await supabase
-      .from('users')
-      .select('id, username, full_name, department')
-      .eq('role', 'student');
-    if (studentError) { container.innerHTML = '<p>Ошибка загрузки студентов.</p>'; return; }
+    const { data: students } = await supabase.from('users').select('id, username, full_name, department').eq('role', 'student');
     if (!students || students.length === 0) { container.innerHTML = '<p>Нет зарегистрированных курсантов.</p>'; return; }
 
     const { data: grades } = await supabase.from('grades').select('student_id, subject, grade');
@@ -378,13 +335,8 @@
   }
 
   window.saveStudentGrades = async (studentId) => {
-    const { data: studentData, error: stError } = await supabase
-      .from('users')
-      .select('department')
-      .eq('id', studentId)
-      .single();
-    if (stError || !studentData) { alert('Ошибка получения данных студента'); return; }
-    const dept = studentData.department || 'обычное';
+    const { data: studentData } = await supabase.from('users').select('department').eq('id', studentId).single();
+    const dept = studentData?.department || 'обычное';
     const subjects = SUBJECTS[dept] || SUBJECTS['обычное'];
     const rows = [];
     for (const subj of subjects) {
@@ -404,9 +356,7 @@
       }
     }
     if (rows.length === 0) { alert('Нет оценок для сохранения'); return; }
-    const { error } = await supabase
-      .from('grades')
-      .upsert(rows, { onConflict: 'student_id,subject' });
+    const { error } = await supabase.from('grades').upsert(rows, { onConflict: 'student_id,subject' });
     if (error) { alert('Ошибка сохранения: ' + error.message); return; }
     alert('Оценки сохранены!');
   };
@@ -414,19 +364,10 @@
   async function loadStudentGrades() {
     const container = document.getElementById('studentGrades');
     if (!currentUser) return;
-    const { data: userData, error: userError } = await supabase
-      .from('users')
-      .select('department')
-      .eq('id', currentUser.id)
-      .single();
-    if (userError || !userData) { container.innerHTML = '<p>Ошибка загрузки отделения.</p>'; return; }
-    const dept = userData.department || 'обычное';
+    const { data: userData } = await supabase.from('users').select('department').eq('id', currentUser.id).single();
+    const dept = userData?.department || 'обычное';
     const subjects = SUBJECTS[dept] || SUBJECTS['обычное'];
-    const { data: grades, error } = await supabase
-      .from('grades')
-      .select('subject, grade')
-      .eq('student_id', currentUser.id);
-    if (error) { container.innerHTML = '<p>Ошибка загрузки оценок.</p>'; return; }
+    const { data: grades } = await supabase.from('grades').select('subject, grade').eq('student_id', currentUser.id);
     const gradesMap = {};
     if (grades) grades.forEach(g => gradesMap[g.subject] = g.grade);
     let html = '<table><tr><th>Предмет</th><th>Оценка</th></tr>';
@@ -447,30 +388,44 @@
     container.innerHTML = html;
   }
 
+  // Переработанное управление пользователями в виде сетки карточек
   async function loadAdminData() {
     const { data: users } = await supabase.from('users').select('*');
-    let userHtml = '<table><tr><th>Ник</th><th>ФИО</th><th>Роль</th><th>Отделение</th><th>Изменить</th></tr>';
-    if (users) users.forEach(u => {
-      userHtml += `<tr>
-        <td>${u.username}</td>
-        <td><input type="text" id="fio_${u.id}" value="${u.full_name||''}" placeholder="ФИО" style="width:200px;"></td>
-        <td>
-          <select id="role_${u.id}">
-            <option value="student" ${u.role==='student'?'selected':''}>Курсант</option>
-            <option value="teacher" ${u.role==='teacher'?'selected':''}>Преподаватель</option>
-            <option value="admin" ${u.role==='admin'?'selected':''}>Администратор</option>
-          </select>
-        </td>
-        <td>
-          <select id="dept_${u.id}">
-            <option value="обычное" ${u.department==='обычное'?'selected':''}>Обычное</option>
-            <option value="платное" ${u.department==='платное'?'selected':''}>Платное</option>
-          </select>
-        </td>
-        <td><button class="btn-primary" onclick="window.updateUserData('${u.id}')" style="width:auto; padding:0.4rem 1rem;">💾 Сохранить</button></td>
-      </tr>`;
-    });
-    userHtml += '</table>';
+    let userHtml = '<div class="admin-users-grid">';
+    if (users) {
+      users.forEach(u => {
+        userHtml += `
+          <div class="user-admin-card">
+            <div class="user-admin-header">
+              <span>👤 ${u.username}</span>
+            </div>
+            <div class="user-admin-fields">
+              <div>
+                <label>ФИО</label>
+                <input type="text" id="fio_${u.id}" value="${u.full_name||''}" placeholder="Не указано">
+              </div>
+              <div>
+                <label>Роль</label>
+                <select id="role_${u.id}">
+                  <option value="student" ${u.role==='student'?'selected':''}>Курсант</option>
+                  <option value="teacher" ${u.role==='teacher'?'selected':''}>Преподаватель</option>
+                  <option value="admin" ${u.role==='admin'?'selected':''}>Администратор</option>
+                </select>
+              </div>
+              <div>
+                <label>Отделение</label>
+                <select id="dept_${u.id}">
+                  <option value="обычное" ${u.department==='обычное'?'selected':''}>Обычное</option>
+                  <option value="платное" ${u.department==='платное'?'selected':''}>Платное</option>
+                </select>
+              </div>
+              <button class="btn-primary" onclick="window.updateUserData('${u.id}')" style="margin-top: 0.4rem; padding: 0.6rem;">💾 Сохранить</button>
+            </div>
+          </div>
+        `;
+      });
+    }
+    userHtml += '</div>';
     document.getElementById('adminUsers').innerHTML = userHtml;
 
     const { data: sched } = await supabase.from('schedule').select('*');
