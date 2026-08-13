@@ -32,6 +32,7 @@
     teacher: document.getElementById('page-teacher'),
     student: document.getElementById('page-student'),
     paid: document.getElementById('page-paid'),
+    regularInfo: document.getElementById('page-regular-info'),
     admin: document.getElementById('page-admin'),
     deptRegular: document.getElementById('page-dept-regular'),
     deptPaid: document.getElementById('page-dept-paid'),
@@ -65,7 +66,6 @@
       const badge = document.getElementById('roleBadge');
       badge.classList.remove('pending');
       
-      // Навигация без дублирующейся вкладки «Платное», оставлен «Платный отдел»
       if (userRole === 'teacher') {
         badge.textContent = 'Преподаватель';
         mainNav.innerHTML = `
@@ -80,6 +80,7 @@
         badge.textContent = 'Курсант';
         mainNav.innerHTML = `
           <button data-page="student">📖 Оценки</button>
+          <button data-page="regular-info">📘 Обычный отдел</button>
           <button data-page="paid">💎 Платный отдел</button>
           <button data-page="schedule">📅 Расписание</button>
         `;
@@ -137,8 +138,11 @@
       if (userRole === 'teacher') loadTeacherGrades();
       if (userRole === 'student') loadStudentGrades();
       if (userRole === 'admin') loadAdminData();
+      
       loadSchedulePublic();
       loadPaidContent();
+      loadRegularContent();
+      
       if (userRole === 'teacher' || userRole === 'admin') {
         loadDepartmentPage('обычное');
         loadDepartmentPage('платное');
@@ -388,7 +392,17 @@
     container.innerHTML = html;
   }
 
-  // Переработанное управление пользователями в виде сетки карточек
+  // Загрузка информации для обычного отделения
+  async function loadRegularContent() {
+    const container = document.getElementById('regularContent');
+    if (!currentUser) { container.innerHTML = '<p>🔒 Войдите, чтобы увидеть информацию.</p>'; return; }
+    const { data } = await supabase.from('regular_sessions').select('*').eq('student_username', currentUsername);
+    if (!data?.length) { container.innerHTML = '<p>У вас нет записей обычного отделения.</p>'; return; }
+    let html = '';
+    data.forEach(d => html += `<div class="regular-info-card"><strong>🧑‍🏫 Проводит:</strong> ${d.trainer||'—'}<br><strong>🕒 Время:</strong> ${d.time||'—'}</div>`);
+    container.innerHTML = html;
+  }
+
   async function loadAdminData() {
     const { data: users } = await supabase.from('users').select('*');
     let userHtml = '<div class="admin-users-grid">';
@@ -428,11 +442,19 @@
     userHtml += '</div>';
     document.getElementById('adminUsers').innerHTML = userHtml;
 
+    // Загрузка расписания
     const { data: sched } = await supabase.from('schedule').select('*');
     let schedHtml = '';
     if (sched) sched.forEach(s => schedHtml += `<div><span>${s.day} ${s.time} — ${s.subject} (${s.teacher})</span> <button onclick="window.deleteItem('schedule',${s.id})" style="border:none; background:transparent; cursor:pointer; font-size:1.2rem;">❌</button></div>`);
     document.getElementById('adminScheduleList').innerHTML = schedHtml || '—';
 
+    // Загрузка обычных сессий
+    const { data: reg } = await supabase.from('regular_sessions').select('*');
+    let regHtml = '';
+    if (reg) reg.forEach(r => regHtml += `<div><span>${r.student_username} | ${r.trainer} | ${r.time}</span> <button onclick="window.deleteItem('regular_sessions',${r.id})" style="border:none; background:transparent; cursor:pointer; font-size:1.2rem;">❌</button></div>`);
+    document.getElementById('adminRegList').innerHTML = regHtml || '—';
+
+    // Загрузка платных сессий
     const { data: paid } = await supabase.from('paid_sessions').select('*');
     let paidHtml = '';
     if (paid) paid.forEach(p => paidHtml += `<div><span>${p.student_username} | ${p.trainer} | ${p.time}</span> <button onclick="window.deleteItem('paid_sessions',${p.id})" style="border:none; background:transparent; cursor:pointer; font-size:1.2rem;">❌</button></div>`);
@@ -469,6 +491,18 @@
     loadDepartmentPage('платное');
   });
 
+  // Добавление записи в обычное отделение
+  document.getElementById('addRegBtn').addEventListener('click', async () => {
+    const studentUsername = document.getElementById('regStudent').value.trim();
+    const trainer = document.getElementById('regTrainer').value.trim();
+    const time = document.getElementById('regTime').value.trim();
+    if (!studentUsername || !trainer || !time) return alert('Заполните все поля');
+    await supabase.from('regular_sessions').insert([{ student_username: studentUsername, trainer, time }]);
+    ['regStudent','regTrainer','regTime'].forEach(id => document.getElementById(id).value='');
+    loadAdminData();
+  });
+
+  // Добавление записи в платное отделение
   document.getElementById('addPaidBtn').addEventListener('click', async () => {
     const studentUsername = document.getElementById('paidStudent').value.trim();
     const trainer = document.getElementById('paidTrainer').value.trim();
